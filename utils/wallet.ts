@@ -15,8 +15,9 @@ export const connectWallet = async () => {
   try {
     const provider = new BrowserProvider(window.ethereum);
     await provider.send('eth_requestAccounts', []);
-    const signer = await provider.getSigner();
-    const address = await signer.getAddress();
+    const accounts = await provider.send('eth_accounts', []);
+    const address = accounts[0];
+    const signer = await provider.getSigner(address);
     const network = await provider.getNetwork();
     
     return { address, network, signer, provider };
@@ -33,8 +34,8 @@ export const getWalletAddress = async () => {
     const provider = new BrowserProvider(window.ethereum);
     const accounts = await provider.send('eth_accounts', []);
     if (accounts.length > 0) {
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
+      const address = accounts[0];
+      const signer = await provider.getSigner(address);
       const network = await provider.getNetwork();
       return { address, network, signer, provider };
     }

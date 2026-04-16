@@ -20,15 +20,15 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, formData
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-[#131316] border border-white/[0.1] rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-white/[0.05]">
+      <div className="w-full max-w-md max-h-[90vh] flex flex-col bg-[#131316] border border-white/[0.1] rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-6 border-b border-white/[0.05] shrink-0">
           <h3 className="text-xl font-display font-bold text-white">Confirm Escrow</h3>
           <button onClick={onClose} disabled={isProcessing} className="text-slate-400 hover:text-white transition-colors disabled:opacity-50">
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
           <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
             <p className="text-sm text-amber-400/90 leading-relaxed">
@@ -60,13 +60,13 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, formData
           </div>
           
           {error && (
-            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-sm text-rose-400">
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-sm text-rose-400 break-all">
               {error}
             </div>
           )}
         </div>
 
-        <div className="p-6 pt-0 flex gap-3">
+        <div className="p-6 flex gap-3 shrink-0 border-t border-white/[0.05]">
           <button 
             onClick={onClose}
             disabled={isProcessing}

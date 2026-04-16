@@ -1,23 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/**
- * @title EscrowPlatform
- * @dev A decentralized escrow smart contract for secure transactions between buyers and sellers.
- */
 contract EscrowPlatform {
-    
-    // --- Enums ---
-    enum EscrowStatus { 
-        Created,    // 0: Escrow created, waiting for funds
-        Funded,     // 1: Buyer deposited funds
-        Delivered,  // 2: Seller marked the product/service as delivered
-        Completed,  // 3: Buyer confirmed delivery, funds released
-        Refunded,   // 4: Funds returned to the buyer
-        Disputed    // 5: Dispute opened by either party
-    }
+    enum EscrowStatus { Created, Funded, Delivered, Accepted, Completed, Refunded, Disputed }
 
-    // --- Structs ---
     struct Escrow {
         address payable buyer;
         address payable seller;
@@ -27,19 +13,22 @@ contract EscrowPlatform {
         EscrowStatus status;
     }
 
-    // --- State Variables ---
     uint256 public escrowCounter;
     mapping(uint256 => Escrow) public escrows;
+    address public agent;
 
-    // --- Events ---
+    constructor() {
+        agent = msg.sender;
+    }
+
     event EscrowCreated(uint256 indexed escrowId, address indexed buyer, address indexed seller, uint256 amount, uint256 deadline);
     event FundsDeposited(uint256 indexed escrowId, uint256 amount);
     event DeliveryMarked(uint256 indexed escrowId);
+    event DeliveryAccepted(uint256 indexed escrowId);
     event PaymentReleased(uint256 indexed escrowId, address to, uint256 amount);
     event RefundIssued(uint256 indexed escrowId, address to, uint256 amount);
     event DisputeOpened(uint256 indexed escrowId, address openedBy);
 
-    // --- Modifiers ---
     modifier onlyBuyer(uint256 _escrowId) {
         require(msg.sender == escrows[_escrowId].buyer, "Only the buyer can call this function");
         _;
@@ -50,18 +39,16 @@ contract EscrowPlatform {
         _;
     }
 
+    modifier onlyAgent() {
+        require(msg.sender == agent, "Only the agent can call this function");
+        _;
+    }
+
     modifier inState(uint256 _escrowId, EscrowStatus _status) {
         require(escrows[_escrowId].status == _status, "Invalid escrow state for this action");
         _;
     }
 
-    // --- Functions ---
-
-    /**
-     * @dev Creates a new escrow agreement.
-     * @param _seller The address of the seller.
-     * @param _deadline The timestamp by which the seller must deliver.
-     */
     function createEscrow(address payable _seller, uint256 _deadline) external returns (uint256) {
         require(_seller != address(0), "Invalid seller address");
         require(_seller != msg.sender, "Buyer and seller cannot be the same address");
@@ -83,10 +70,6 @@ contract EscrowPlatform {
         return newEscrowId;
     }
 
-    /**
-     * @dev Buyer deposits funds into the escrow.
-     * @param _escrowId The ID of the escrow.
-     */
     function depositFunds(uint256 _escrowId) external payable onlyBuyer(_escrowId) inState(_escrowId, EscrowStatus.Created) {
         require(msg.value > 0, "Deposit amount must be greater than 0");
 
@@ -96,37 +79,28 @@ contract EscrowPlatform {
         emit FundsDeposited(_escrowId, msg.value);
     }
 
-    /**
-     * @dev Seller marks the product/service as delivered.
-     * @param _escrowId The ID of the escrow.
-     */
     function markDelivered(uint256 _escrowId) external onlySeller(_escrowId) inState(_escrowId, EscrowStatus.Funded) {
         escrows[_escrowId].status = EscrowStatus.Delivered;
         emit DeliveryMarked(_escrowId);
     }
 
-    /**
-     * @dev Buyer confirms the delivery was satisfactory.
-     * @param _escrowId The ID of the escrow.
-     */
-    function confirmDelivery(uint256 _escrowId) external onlyBuyer(_escrowId) inState(_escrowId, EscrowStatus.Delivered) {
+    function acceptDelivery(uint256 _escrowId) external onlyBuyer(_escrowId) inState(_escrowId, EscrowStatus.Delivered) {
+        escrows[_escrowId].status = EscrowStatus.Accepted;
+        emit DeliveryAccepted(_escrowId);
+    }
+
+    function confirmDelivery(uint256 _escrowId) external onlyAgent inState(_escrowId, EscrowStatus.Accepted) {
         escrows[_escrowId].status = EscrowStatus.Completed;
-        
-        // Automatically release payment upon confirmation
         releasePayment(_escrowId);
     }
 
-    /**
-     * @dev Internal/Public function to release funds to the seller.
-     * @param _escrowId The ID of the escrow.
-     */
     function releasePayment(uint256 _escrowId) public {
         Escrow storage escrow = escrows[_escrowId];
         require(escrow.status == EscrowStatus.Completed, "Escrow is not completed yet");
         require(escrow.amount > 0, "No funds available to release");
 
         uint256 paymentAmount = escrow.amount;
-        escrow.amount = 0; // Checks-Effects-Interactions pattern to prevent reentrancy
+        escrow.amount = 0; 
 
         (bool success, ) = escrow.seller.call{value: paymentAmount}("");
         require(success, "Transfer to seller failed");
@@ -134,24 +108,20 @@ contract EscrowPlatform {
         emit PaymentReleased(_escrowId, escrow.seller, paymentAmount);
     }
 
-    /**
-     * @dev Refunds the buyer. Can be called by the seller anytime, or by the buyer if the deadline passed.
-     * @param _escrowId The ID of the escrow.
-     */
     function refundBuyer(uint256 _escrowId) external {
         Escrow storage escrow = escrows[_escrowId];
-        require(msg.sender == escrow.buyer || msg.sender == escrow.seller, "Not authorized");
-        require(escrow.status == EscrowStatus.Funded || escrow.status == EscrowStatus.Delivered, "Invalid state for refund");
+        require(msg.sender == escrow.buyer || msg.sender == escrow.seller || msg.sender == agent, "Not authorized");
+        require(escrow.status == EscrowStatus.Funded || escrow.status == EscrowStatus.Delivered || escrow.status == EscrowStatus.Disputed, "Invalid state for refund");
 
-        // Seller can always refund. Buyer can only refund if deadline has passed and it's not delivered.
         bool isSeller = msg.sender == escrow.seller;
         bool isBuyerPastDeadline = (msg.sender == escrow.buyer && block.timestamp > escrow.deadline && escrow.status != EscrowStatus.Delivered);
+        bool isAgentDispute = (msg.sender == agent && escrow.status == EscrowStatus.Disputed);
         
-        require(isSeller || isBuyerPastDeadline, "Refund conditions not met");
+        require(isSeller || isBuyerPastDeadline || isAgentDispute, "Refund conditions not met");
 
         escrow.status = EscrowStatus.Refunded;
         uint256 refundAmount = escrow.amount;
-        escrow.amount = 0; // Checks-Effects-Interactions pattern
+        escrow.amount = 0; 
 
         if (refundAmount > 0) {
             (bool success, ) = escrow.buyer.call{value: refundAmount}("");
@@ -161,10 +131,6 @@ contract EscrowPlatform {
         emit RefundIssued(_escrowId, escrow.buyer, refundAmount);
     }
 
-    /**
-     * @dev Opens a dispute for the escrow. Can be called by buyer or seller.
-     * @param _escrowId The ID of the escrow.
-     */
     function openDispute(uint256 _escrowId) external {
         Escrow storage escrow = escrows[_escrowId];
         require(msg.sender == escrow.buyer || msg.sender == escrow.seller, "Only buyer or seller can open a dispute");
@@ -175,9 +141,6 @@ contract EscrowPlatform {
         emit DisputeOpened(_escrowId, msg.sender);
     }
 
-    /**
-     * @dev Helper function to get escrow details.
-     */
     function getEscrowDetails(uint256 _escrowId) external view returns (
         address buyer,
         address seller,

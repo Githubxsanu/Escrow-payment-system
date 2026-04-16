@@ -30,9 +30,9 @@ export default function CTA() {
                 Start Using BlockSafe
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <button className="px-8 py-4 rounded-full bg-white/[0.05] border border-white/[0.1] text-white font-medium hover:bg-white/[0.1] transition-all">
+              <a href="https://github.com/xsanu/Escrow-payment-system" target="_blank" rel="noopener noreferrer" className="px-8 py-4 rounded-full bg-white/[0.05] border border-white/[0.1] text-white font-medium hover:bg-white/[0.1] transition-all flex items-center justify-center">
                 Read Documentation
-              </button>
+              </a>
             </div>
           </div>
         </motion.div>

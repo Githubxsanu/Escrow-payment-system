@@ -53,9 +53,9 @@ export default function Navbar() {
             
             <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
               <Link href="/" className="hover:text-cyan-400 transition-colors">Home</Link>
-              <a href="#" className="hover:text-white transition-colors">Features</a>
-              <a href="#" className="hover:text-white transition-colors">How it Works</a>
-              <a href="#" className="hover:text-white transition-colors">Docs</a>
+              <Link href="/#features" className="hover:text-white transition-colors">Features</Link>
+              <Link href="/#how-it-works" className="hover:text-white transition-colors">How it Works</Link>
+              <a href="https://github.com/xsanu/Escrow-payment-system" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Docs</a>
             </div>
 
             <div className="flex items-center gap-4">

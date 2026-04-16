@@ -1,6 +1,8 @@
 import { ArrowRight, Copy, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 import StatusBadge, { EscrowStatus } from './StatusBadge';
 import Timeline from './Timeline';
+import { useWallet } from '@/hooks/useWallet';
 
 export interface EscrowDeal {
   id: string;
@@ -13,7 +15,12 @@ export interface EscrowDeal {
 }
 
 export default function EscrowCard({ deal }: { deal: EscrowDeal }) {
+  const { address } = useWallet();
   const formatAddress = (addr: string) => `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+
+  const isBuyer = address?.toLowerCase() === deal.buyer.toLowerCase();
+  const isSeller = address?.toLowerCase() === deal.seller.toLowerCase();
+  const isAgent = !!address && !isBuyer && !isSeller;
 
   return (
     <div className="p-6 rounded-2xl bg-[#131316] border border-white/[0.05] hover:border-white/[0.1] transition-all duration-300 group">
@@ -58,35 +65,47 @@ export default function EscrowCard({ deal }: { deal: EscrowDeal }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/[0.05]">
-        {deal.status === 'Pending' && (
-          <button className="px-5 py-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all text-sm font-medium flex items-center gap-2">
-            Deposit Funds <ArrowRight className="w-4 h-4" />
-          </button>
-        )}
-        {deal.status === 'Funded' && (
-          <button className="px-5 py-2.5 rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 hover:shadow-[0_0_15px_rgba(139,92,246,0.2)] transition-all text-sm font-medium flex items-center gap-2">
-            Confirm Delivery <ArrowRight className="w-4 h-4" />
-          </button>
-        )}
-        {deal.status === 'Delivered' && (
-          <>
-            <button className="px-5 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:shadow-[0_0_15px_rgba(52,211,153,0.2)] transition-all text-sm font-medium flex items-center gap-2">
-              Release Payment <ArrowRight className="w-4 h-4" />
+        {deal.status === 'Pending' && isBuyer && (
+          <Link href={`/dashboard/escrow/${deal.id}`}>
+            <button className="px-5 py-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 hover:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all text-sm font-medium flex items-center gap-2">
+              Deposit Funds <ArrowRight className="w-4 h-4" />
             </button>
+          </Link>
+        )}
+        {deal.status === 'Funded' && isSeller && (
+          <Link href={`/dashboard/escrow/${deal.id}`}>
+            <button className="px-5 py-2.5 rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 hover:shadow-[0_0_15px_rgba(139,92,246,0.2)] transition-all text-sm font-medium flex items-center gap-2">
+              Confirm Delivery <ArrowRight className="w-4 h-4" />
+            </button>
+          </Link>
+        )}
+        {deal.status === 'Delivered' && isBuyer && (
+          <Link href={`/dashboard/escrow/${deal.id}`}>
+            <button className="px-5 py-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all text-sm font-medium flex items-center gap-2">
+              Accept Delivery <ArrowRight className="w-4 h-4" />
+            </button>
+          </Link>
+        )}
+        {(deal.status === 'Delivered' || deal.status === 'Accepted') && (
+          <Link href={`/dashboard/escrow/${deal.id}`}>
             <button className="px-5 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:shadow-[0_0_15px_rgba(244,63,94,0.2)] transition-all text-sm font-medium">
               Open Dispute
             </button>
-          </>
+          </Link>
         )}
         {deal.status === 'Completed' && (
-          <button className="px-5 py-2.5 rounded-xl bg-white/[0.05] text-slate-300 border border-white/[0.1] hover:bg-white/[0.1] transition-all text-sm font-medium">
-            View Receipt
-          </button>
+          <Link href={`/dashboard/escrow/${deal.id}`}>
+            <button className="px-5 py-2.5 rounded-xl bg-white/[0.05] text-slate-300 border border-white/[0.1] hover:bg-white/[0.1] transition-all text-sm font-medium">
+              View Receipt
+            </button>
+          </Link>
         )}
         {deal.status === 'Disputed' && (
-          <button className="px-5 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:shadow-[0_0_15px_rgba(244,63,94,0.2)] transition-all text-sm font-medium">
-            View Dispute Details
-          </button>
+          <Link href={`/dashboard/escrow/${deal.id}`}>
+            <button className="px-5 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 hover:shadow-[0_0_15px_rgba(244,63,94,0.2)] transition-all text-sm font-medium">
+              View Dispute Details
+            </button>
+          </Link>
         )}
       </div>
     </div>

@@ -1,11 +1,11 @@
 import { Check } from 'lucide-react';
 import { EscrowStatus } from './StatusBadge';
 
-const steps = ['Created', 'Funded', 'Delivered', 'Released'];
+const steps = ['Created', 'Funded', 'Delivered', 'Accepted', 'Released'];
 
 export default function Timeline({ currentStatus }: { currentStatus: EscrowStatus }) {
   const getStepStatus = (step: string) => {
-    if (currentStatus === 'Disputed') return step === 'Created' || step === 'Funded' ? 'completed' : 'pending';
+    if (currentStatus === 'Disputed') return step === 'Created' || step === 'Funded' || step === 'Delivered' ? 'completed' : 'pending';
     
     const statusIndex = steps.indexOf(currentStatus === 'Completed' ? 'Released' : currentStatus === 'Pending' ? 'Created' : currentStatus);
     const stepIndex = steps.indexOf(step);

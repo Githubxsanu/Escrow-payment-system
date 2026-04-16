@@ -5,3 +5,16 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Test & Debug Scripts
+check-*.js
+
+# Smart Contract build artifacts (if using Hardhat/Foundry in future)
+artifacts/
+cache/
+typechain/
+typechain-types/
+coverage.json
+
+# Next.js build output
+out/

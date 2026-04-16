@@ -29,13 +29,24 @@ export default function ActionModal({ isOpen, onClose, onConfirm, action, escrow
       case 'Mark as Delivered':
         return {
           title: 'Confirm Delivery',
-          description: 'You are marking this deal as delivered. The buyer will be notified to review the delivery and release the funds.',
+          description: 'You are marking this deal as delivered. The buyer will be notified to review the delivery and accept it.',
           buttonText: 'Mark Delivered',
           colorClass: 'violet',
           bgClass: 'bg-violet-500/10',
           borderClass: 'border-violet-500/20',
           textClass: 'text-violet-400',
           btnClass: 'bg-gradient-to-r from-violet-500 to-violet-600 hover:shadow-[0_0_20px_rgba(139,92,246,0.4)]'
+        };
+      case 'Accept Delivery':
+        return {
+          title: 'Accept Delivery',
+          description: 'You are confirming that you have received the product or service. Once accepted, the agent can release the funds to the seller.',
+          buttonText: 'Accept Delivery',
+          colorClass: 'blue',
+          bgClass: 'bg-blue-500/10',
+          borderClass: 'border-blue-500/20',
+          textClass: 'text-blue-400',
+          btnClass: 'bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]'
         };
       case 'Release Payment':
         return {
@@ -70,6 +81,17 @@ export default function ActionModal({ isOpen, onClose, onConfirm, action, escrow
           textClass: 'text-rose-400',
           btnClass: 'bg-gradient-to-r from-rose-500 to-rose-600 hover:shadow-[0_0_20px_rgba(244,63,94,0.4)]'
         };
+      case 'Resolve Dispute':
+        return {
+          title: 'Resolve Dispute',
+          description: 'You are resolving the dispute in favor of the buyer by reverting the locked funds back to them. This action is final.',
+          buttonText: 'Revert Payment',
+          colorClass: 'emerald',
+          bgClass: 'bg-emerald-500/10',
+          borderClass: 'border-emerald-500/20',
+          textClass: 'text-emerald-400',
+          btnClass: 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]'
+        };
       default:
         return {
           title: 'Confirm Action',
@@ -88,15 +110,15 @@ export default function ActionModal({ isOpen, onClose, onConfirm, action, escrow
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-[#131316] border border-white/[0.1] rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-white/[0.05]">
+      <div className="w-full max-w-md max-h-[90vh] flex flex-col bg-[#131316] border border-white/[0.1] rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-6 border-b border-white/[0.05] shrink-0">
           <h3 className="text-xl font-display font-bold text-white">{details.title}</h3>
           <button onClick={onClose} disabled={isProcessing} className="text-slate-400 hover:text-white transition-colors disabled:opacity-50">
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
           <div className={`p-4 rounded-xl ${details.bgClass} border ${details.borderClass} flex gap-3`}>
             <AlertTriangle className={`w-5 h-5 ${details.textClass} shrink-0`} />
             <p className={`text-sm ${details.textClass} opacity-90 leading-relaxed`}>
@@ -116,13 +138,13 @@ export default function ActionModal({ isOpen, onClose, onConfirm, action, escrow
           </div>
           
           {error && (
-            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-sm text-rose-400">
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-sm text-rose-400 break-all">
               {error}
             </div>
           )}
         </div>
 
-        <div className="p-6 pt-0 flex gap-3">
+        <div className="p-6 flex gap-3 shrink-0 border-t border-white/[0.05]">
           <button 
             onClick={onClose}
             disabled={isProcessing}

@@ -52,9 +52,9 @@ export default function Hero() {
               Create Escrow
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <button className="w-full sm:w-auto px-8 py-4 rounded-full bg-white/[0.05] border border-white/[0.1] text-white font-medium hover:bg-white/[0.1] transition-all">
+            <Link href="#features" className="w-full sm:w-auto px-8 py-4 rounded-full bg-white/[0.05] border border-white/[0.1] text-white font-medium hover:bg-white/[0.1] transition-all flex items-center justify-center">
               Explore Platform
-            </button>
+            </Link>
           </motion.div>
         </div>
       </div>

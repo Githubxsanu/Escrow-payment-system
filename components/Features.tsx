@@ -32,7 +32,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section className="py-24 relative z-10">
+    <section id="features" className="py-24 relative z-10">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <motion.h2 

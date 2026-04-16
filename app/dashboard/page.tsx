@@ -1,37 +1,14 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Plus, List, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 import SummaryStats from '@/components/dashboard/SummaryStats';
 import EscrowCard, { EscrowDeal } from '@/components/dashboard/EscrowCard';
 import TransactionTable, { Transaction } from '@/components/dashboard/TransactionTable';
-
-const mockEscrows: EscrowDeal[] = [
-  {
-    id: 'ESC-8921',
-    title: 'Web3 Audit Services',
-    buyer: '0x71C...976F',
-    seller: '0x89A...2B1C',
-    amount: '5.5 ETH',
-    status: 'Funded',
-    date: 'Oct 24, 2026'
-  },
-  {
-    id: 'ESC-8922',
-    title: 'NFT Collection Art',
-    buyer: '0x32A...119D',
-    seller: '0x71C...976F',
-    amount: '2.0 ETH',
-    status: 'Pending',
-    date: 'Oct 25, 2026'
-  },
-  {
-    id: 'ESC-8919',
-    title: 'Smart Contract Dev',
-    buyer: '0x99B...44E2',
-    seller: '0x11C...88F1',
-    amount: '12.0 ETH',
-    status: 'Delivered',
-    date: 'Oct 20, 2026'
-  }
-];
+import { useEscrowContract } from '@/hooks/useEscrowContract';
+import { useWallet } from '@/hooks/useWallet';
+// Removed mock escrows array
 
 const mockTransactions: Transaction[] = [
   {
@@ -60,7 +37,43 @@ const mockTransactions: Transaction[] = [
   }
 ];
 
+
+
 export default function DashboardPage() {
+  const { isReady, getAllEscrows } = useEscrowContract();
+  const { address } = useWallet();
+  const [escrows, setEscrows] = useState<EscrowDeal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEscrows = async () => {
+      if (!isReady || !address) {
+        setEscrows([]);
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const fetched = await getAllEscrows();
+        const mapped: EscrowDeal[] = fetched.map((e: any) => ({
+          id: `ESC-${e.id}`,
+          title: `Escrow Deal #${e.id}`,
+          buyer: e.buyer,
+          seller: e.seller,
+          amount: `${e.amount} ETH`,
+          status: e.status === 'Created' ? 'Pending' : e.status, // Map 'Created' to 'Pending' for UI
+          date: new Date(e.createdAt * 1000).toLocaleDateString()
+        }));
+        setEscrows(mapped);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchEscrows();
+  }, [isReady, address, getAllEscrows]);
+
   return (
     <div className="space-y-10 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -71,27 +84,37 @@ export default function DashboardPage() {
         
         {/* Quick Actions */}
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 rounded-xl bg-white/[0.05] text-slate-300 border border-white/[0.1] hover:bg-white/[0.1] transition-all text-sm font-medium flex items-center gap-2">
-            <List className="w-4 h-4" />
-            View All
-          </button>
-          <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all text-sm font-medium flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Create Escrow
-          </button>
+          <Link href="#active-escrows">
+            <button className="px-4 py-2 rounded-xl bg-white/[0.05] text-slate-300 border border-white/[0.1] hover:bg-white/[0.1] transition-all text-sm font-medium flex items-center gap-2">
+              <List className="w-4 h-4" />
+              View All
+            </button>
+          </Link>
+          <Link href="/dashboard/create">
+            <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all text-sm font-medium flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Create Escrow
+            </button>
+          </Link>
         </div>
       </div>
 
       <SummaryStats />
 
-      <div className="space-y-6">
+      <div id="active-escrows" className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-display font-semibold text-white">Active Escrows</h2>
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {mockEscrows.map((deal) => (
-            <EscrowCard key={deal.id} deal={deal} />
-          ))}
+          {isLoading ? (
+            <div className="text-slate-400">Loading escrows...</div>
+          ) : escrows.length > 0 ? (
+            escrows.map((deal) => (
+              <EscrowCard key={deal.id} deal={deal} />
+            ))
+          ) : (
+            <div className="text-slate-400">No active escrows found. Create one to get started!</div>
+          )}
         </div>
       </div>
 
