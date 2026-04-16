@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { BrowserProvider, Contract, parseEther, formatEther } from 'ethers';
 
 // Contract Address
-// Will draw from the .env file variable securely
-export const ESCROW_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS as string;
+// Will draw from the .env file variable securely, otherwise gracefully falls back to the public testnet address
+export const ESCROW_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS || "0x31a98074c02F42328431bab9F670314a762f2e80";
 
 // Minimal ABI for the EscrowPlatform contract
 export const ESCROW_ABI = [
