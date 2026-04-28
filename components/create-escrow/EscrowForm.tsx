@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { isAddress } from 'ethers';
+import { motion } from 'motion/react';
 
 interface EscrowFormProps {
   formData: any;
@@ -10,7 +11,7 @@ interface EscrowFormProps {
 export default function EscrowForm({ formData, setFormData, onSubmit }: EscrowFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     
@@ -33,6 +34,14 @@ export default function EscrowForm({ formData, setFormData, onSubmit }: EscrowFo
       newErrors.amount = 'Amount is required';
     } else if (isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
       newErrors.amount = 'Amount must be greater than 0';
+    }
+
+    if (formData.currencyType === 'erc20') {
+      if (!formData.tokenAddress) {
+        newErrors.tokenAddress = 'Token address is required for ERC20';
+      } else if (!isAddress(formData.tokenAddress)) {
+        newErrors.tokenAddress = 'Invalid Token address';
+      }
     }
 
     if (!formData.description) {
@@ -72,21 +81,57 @@ export default function EscrowForm({ formData, setFormData, onSubmit }: EscrowFo
           {errors.sellerAddress && <p className="mt-1.5 text-xs text-rose-400">{errors.sellerAddress}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Payment Amount (ETH)</label>
-          <div className="relative">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Currency</label>
+            <select 
+              name="currencyType"
+              value={formData.currencyType || 'native'}
+              onChange={handleChange}
+              className="w-full bg-black/40 border border-white/[0.1] focus:border-cyan-500 focus:ring-cyan-500/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 transition-all text-sm appearance-none cursor-pointer"
+            >
+              <option value="native" className="bg-[#131316]">MATIC (Native)</option>
+              <option value="erc20" className="bg-[#131316]">Custom ERC20 Token</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Payment Amount</label>
+            <div className="relative">
+              <input 
+                type="text" 
+                name="amount"
+                value={formData.amount}
+                onChange={handleChange}
+                placeholder="0.00" 
+                className={`w-full bg-black/40 border ${errors.amount ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/20' : 'border-white/[0.1] focus:border-cyan-500 focus:ring-cyan-500/20'} rounded-xl pl-4 pr-16 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 transition-all font-mono text-sm`}
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">
+                {formData.currencyType === 'erc20' ? 'TOKEN' : 'MATIC'}
+              </div>
+            </div>
+            {errors.amount && <p className="mt-1.5 text-xs text-rose-400">{errors.amount}</p>}
+          </div>
+        </div>
+
+        {formData.currencyType === 'erc20' && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="overflow-hidden"
+          >
+            <label className="block text-sm font-medium text-slate-300 mb-2">ERC20 Token Address</label>
             <input 
               type="text" 
-              name="amount"
-              value={formData.amount}
+              name="tokenAddress"
+              value={formData.tokenAddress || ''}
               onChange={handleChange}
-              placeholder="0.00" 
-              className={`w-full bg-black/40 border ${errors.amount ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/20' : 'border-white/[0.1] focus:border-cyan-500 focus:ring-cyan-500/20'} rounded-xl pl-4 pr-16 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 transition-all font-mono text-sm`}
+              placeholder="0x..." 
+              className={`w-full bg-black/40 border ${errors.tokenAddress ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/20' : 'border-white/[0.1] focus:border-cyan-500 focus:ring-cyan-500/20'} rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 transition-all font-mono text-sm`}
             />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">ETH</div>
-          </div>
-          {errors.amount && <p className="mt-1.5 text-xs text-rose-400">{errors.amount}</p>}
-        </div>
+            {errors.tokenAddress && <p className="mt-1.5 text-xs text-rose-400">{errors.tokenAddress}</p>}
+          </motion.div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">Deal Description</label>

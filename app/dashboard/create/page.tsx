@@ -11,7 +11,7 @@ import { Shield } from 'lucide-react';
 
 export default function CreateEscrowPage() {
   const router = useRouter();
-  const { address } = useWallet();
+  const { address, network } = useWallet();
   const { createEscrow, depositFunds, isReady } = useEscrowContract();
   
   const [formData, setFormData] = useState({
@@ -20,6 +20,8 @@ export default function CreateEscrowPage() {
     description: '',
     deadline: '',
     notes: '',
+    currencyType: 'native',
+    tokenAddress: '',
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -45,9 +47,16 @@ export default function CreateEscrowPage() {
 
       // 2. Call createEscrow on the smart contract
       console.log('Creating escrow on blockchain...');
-      // Note: Since we don't have a real deployed contract, this will likely fail in MetaMask.
-      // In a real app, you would wait for the tx, get the escrowId, and then call depositFunds.
-      const txReceipt = await createEscrow(formData.sellerAddress, deadlineTimestamp);
+      
+      const tokenAddress = formData.currencyType === 'erc20' 
+        ? formData.tokenAddress 
+        : "0x0000000000000000000000000000000000000000";
+
+      const txReceipt = await createEscrow(
+        formData.sellerAddress, 
+        deadlineTimestamp, 
+        tokenAddress
+      );
       console.log('Escrow created!', txReceipt);
       
       // 3. Close modal and redirect to dashboard
@@ -65,7 +74,12 @@ export default function CreateEscrowPage() {
     <div className="max-w-5xl mx-auto space-y-8 pb-10">
       <div>
         <h1 className="text-3xl font-display font-bold text-white mb-2">Create New Escrow</h1>
-        <p className="text-slate-400">Securely lock funds for a product or service. Funds are only released when you are satisfied.</p>
+        <p className="text-slate-400 mb-4">Securely lock funds for a product or service. Funds are only released when you are satisfied.</p>
+        
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          Connected to: <span className="text-white ml-1">{network?.name || 'Local / Unknown Network'}</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

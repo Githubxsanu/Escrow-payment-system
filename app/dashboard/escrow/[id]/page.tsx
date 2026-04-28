@@ -128,6 +128,12 @@ export default function EscrowDetailPage() {
           if (!digitalFile) throw new Error("Please upload a file to deliver.");
           if (!signer) throw new Error("Wallet not connected completely");
           
+          // Vercel Serverless Body Limit is 4.5MB. Base64 adds ~33% overhead.
+          // We limit to 3MB to be safe.
+          if (digitalFile.size > 3 * 1024 * 1024) {
+            throw new Error("File too large for this demo. Please use a file smaller than 3MB.");
+          }
+
           const reader = new FileReader();
           reader.readAsDataURL(digitalFile);
           await new Promise(resolve => { reader.onload = resolve; });
@@ -147,7 +153,11 @@ export default function EscrowDetailPage() {
               fileName: digitalFile.name
             })
           });
-          if (!res.ok) throw new Error("Failed to upload file off-chain.");
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.error || "Failed to upload file off-chain. This is likely due to Vercel's 4.5MB limit.");
+          }
           
           await markDelivered(escrowIdNum);
           break;

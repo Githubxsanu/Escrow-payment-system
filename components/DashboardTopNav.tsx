@@ -9,14 +9,12 @@ interface TopNavProps {
   onMenuClick: () => void;
 }
 
-const TARGET_CHAIN_ID = BigInt(11155111); // Sepolia
+// No longer hardcoding a target chain to allow "any network" support
 
 export default function DashboardTopNav({ onMenuClick }: TopNavProps) {
-  const { address, shortAddress, network, isConnecting, error, connect, disconnect } = useWallet();
+  const { address, shortAddress, network, isConnecting, disconnect } = useWallet();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const isWrongNetwork = network && network.chainId !== TARGET_CHAIN_ID;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -37,15 +35,7 @@ export default function DashboardTopNav({ onMenuClick }: TopNavProps) {
 
   return (
     <>
-      {isWrongNetwork && (
-        <div className="fixed top-0 left-0 right-0 h-10 bg-amber-500/10 border-b border-amber-500/20 z-[60] flex items-center justify-center px-4">
-          <div className="flex items-center gap-2 text-amber-400 text-sm font-medium">
-            <AlertTriangle className="w-4 h-4" />
-            <span>Please switch your wallet network to Sepolia Testnet</span>
-          </div>
-        </div>
-      )}
-      <nav className={`fixed ${isWrongNetwork ? 'top-10' : 'top-0'} left-0 right-0 h-20 z-50 bg-[#0a0a0c]/80 backdrop-blur-md border-b border-white/[0.05] transition-all`}>
+      <nav className="fixed top-0 left-0 right-0 h-20 z-50 bg-[#0a0a0c]/80 backdrop-blur-md border-b border-white/[0.05] transition-all">
         <div className="flex items-center justify-between h-full px-4 lg:px-8">
           <div className="flex items-center gap-4">
             <button 
@@ -55,12 +45,14 @@ export default function DashboardTopNav({ onMenuClick }: TopNavProps) {
               <Menu className="w-6 h-6" />
             </button>
             
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)] group-hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-shadow">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-display font-bold text-white tracking-tight hidden sm:block">BlockSafe</span>
-            </Link>
+            <div className="flex items-center gap-6">
+              <Link href="/" className="flex items-center gap-2 group">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)] group-hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-shadow">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-display font-bold text-white tracking-tight">BlockSafe</span>
+              </Link>
+            </div>
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
@@ -95,8 +87,9 @@ export default function DashboardTopNav({ onMenuClick }: TopNavProps) {
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#131316] border border-white/[0.05] shadow-xl overflow-hidden z-50">
                     <div className="p-2 border-b border-white/[0.05]">
-                      <div className="text-xs text-slate-500 font-medium px-2 py-1">
-                        {network?.name || 'Unknown Network'}
+                      <div className="text-xs text-slate-500 font-medium px-2 py-1 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                        {network?.name || 'Any Chain'}
                       </div>
                     </div>
                     <div className="p-1">
@@ -107,16 +100,18 @@ export default function DashboardTopNav({ onMenuClick }: TopNavProps) {
                         <Copy className="w-4 h-4" />
                         Copy Address
                       </button>
-                      <a 
-                        href={`https://sepolia.etherscan.io/address/${address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        View Explorer
-                      </a>
+                      {network?.name?.toLowerCase().includes('polygon') && (
+                        <a 
+                          href={`https://amoy.polygonscan.com/address/${address}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors"
+                          onClick={() => setIsDropdownOpen(false)}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          View Explorer
+                        </a>
+                      )}
                       <button 
                         onClick={() => {
                           disconnect();

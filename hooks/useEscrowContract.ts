@@ -7,15 +7,15 @@ export const ESCROW_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_ESCROW_CONTRACT_A
 
 // Minimal ABI for the EscrowPlatform contract
 export const ESCROW_ABI = [
-  "function createEscrow(address _seller, uint256 _deadline) external returns (uint256)",
-  "function depositFunds(uint256 _escrowId) external payable",
+  "function createEscrow(address _seller, uint256 _deadline, address _token) external returns (uint256)",
+  "function depositFunds(uint256 _escrowId, uint256 _amount) external payable",
   "function markDelivered(uint256 _escrowId) external",
   "function acceptDelivery(uint256 _escrowId) external",
   "function confirmDelivery(uint256 _escrowId) external",
   "function releasePayment(uint256 _escrowId) public",
   "function refundBuyer(uint256 _escrowId) external",
   "function openDispute(uint256 _escrowId) external",
-  "function getEscrowDetails(uint256 _escrowId) external view returns (address buyer, address seller, uint256 amount, uint256 createdAt, uint256 deadline, uint8 status)",
+  "function getEscrowDetails(uint256 _escrowId) external view returns (address buyer, address seller, address token, uint256 amount, uint256 createdAt, uint256 deadline, uint8 status)",
   "function escrowCounter() external view returns (uint256)",
   "function agent() external view returns (address)",
   "event EscrowCreated(uint256 indexed escrowId, address indexed buyer, address indexed seller, uint256 amount, uint256 deadline)",
@@ -79,18 +79,24 @@ export function useEscrowContract() {
 
   // --- Contract Interactions ---
 
-  const createEscrow = useCallback(async (sellerAddress: string, deadlineTimestamp: number) => {
+  const createEscrow = useCallback(async (sellerAddress: string, deadlineTimestamp: number, tokenAddress: string = "0x0000000000000000000000000000000000000000") => {
     if (!contract) throw new Error("Contract not initialized");
-    const tx = await contract.createEscrow(sellerAddress, deadlineTimestamp);
+    const tx = await contract.createEscrow(sellerAddress, deadlineTimestamp, tokenAddress);
     return await tx.wait();
   }, [contract]);
 
-  const depositFunds = useCallback(async (escrowId: number, amountInEth: string) => {
+  const depositFunds = useCallback(async (escrowId: number, amountInEth: string, isToken: boolean = false) => {
     if (!contract) throw new Error("Contract not initialized");
-    const tx = await contract.depositFunds(escrowId, {
-      value: parseEther(amountInEth)
-    });
-    return await tx.wait();
+    
+    if (isToken) {
+      const tx = await contract.depositFunds(escrowId, parseEther(amountInEth));
+      return await tx.wait();
+    } else {
+      const tx = await contract.depositFunds(escrowId, 0, {
+        value: parseEther(amountInEth)
+      });
+      return await tx.wait();
+    }
   }, [contract]);
 
   const markDelivered = useCallback(async (escrowId: number) => {
@@ -134,6 +140,7 @@ export function useEscrowContract() {
       id: escrowId,
       buyer: details.buyer,
       seller: details.seller,
+      token: details.token,
       amount: formatEther(details.amount),
       createdAt: Number(details.createdAt),
       deadline: Number(details.deadline),

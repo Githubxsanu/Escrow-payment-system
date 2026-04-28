@@ -25,7 +25,9 @@ export default function DealSummaryCard({ formData, buyerAddress }: DealSummaryC
         
         <div className="flex justify-between items-start pb-4 border-b border-white/[0.05]">
           <span className="text-sm text-slate-400">Amount</span>
-          <span className="text-sm font-mono font-medium text-white">{formData.amount ? `${formData.amount} ETH` : '—'}</span>
+          <span className="text-sm font-mono font-medium text-white">
+            {formData.amount ? `${formData.amount} ${formData.currencyType === 'erc20' ? 'TOKEN' : 'MATIC'}` : '—'}
+          </span>
         </div>
         
         <div className="flex justify-between items-start pb-4 border-b border-white/[0.05]">
@@ -35,7 +37,9 @@ export default function DealSummaryCard({ formData, buyerAddress }: DealSummaryC
         
         <div className="flex justify-between items-start pt-2">
           <span className="text-sm text-slate-400">Total to Lock</span>
-          <span className="text-xl font-mono font-bold text-cyan-400">{formData.amount ? `${formData.amount} ETH` : '0.00 ETH'}</span>
+          <span className="text-xl font-mono font-bold text-cyan-400">
+            {formData.amount ? `${formData.amount} ${formData.currencyType === 'erc20' ? 'TOKEN' : 'MATIC'}` : '0.00 MATIC'}
+          </span>
         </div>
       </div>
     </div>

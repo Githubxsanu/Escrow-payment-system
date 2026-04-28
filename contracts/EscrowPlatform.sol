@@ -1,21 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+interface IERC20 {
+    function transfer(address to, uint256 amount) external returns (bool);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function balanceOf(address account) external view returns (uint256);
+}
+
 contract EscrowPlatform {
     enum EscrowStatus { Created, Funded, Delivered, Accepted, Completed, Refunded, Disputed }
 
     struct Escrow {
         address payable buyer;
-        address payable seller;
-        uint256 amount;
-        uint256 createdAt;
-        uint256 deadline;
+        uint64 createdAt;
         EscrowStatus status;
+        address payable seller;
+        address token; // address(0) for native currency
+        uint64 deadline;
+        uint256 amount;
     }
 
-    uint256 public escrowCounter;
-    mapping(uint256 => Escrow) public escrows;
     address public agent;
+    uint96 public escrowCounter;
+    mapping(uint256 => Escrow) public escrows;
 
     constructor() {
         agent = msg.sender;
@@ -49,7 +56,7 @@ contract EscrowPlatform {
         _;
     }
 
-    function createEscrow(address payable _seller, uint256 _deadline) external returns (uint256) {
+    function createEscrow(address payable _seller, uint256 _deadline, address _token) external returns (uint256) {
         require(_seller != address(0), "Invalid seller address");
         require(_seller != msg.sender, "Buyer and seller cannot be the same address");
         require(_deadline > block.timestamp, "Deadline must be in the future");
@@ -59,24 +66,32 @@ contract EscrowPlatform {
 
         escrows[newEscrowId] = Escrow({
             buyer: payable(msg.sender),
+            createdAt: uint64(block.timestamp),
+            status: EscrowStatus.Created,
             seller: _seller,
-            amount: 0,
-            createdAt: block.timestamp,
-            deadline: _deadline,
-            status: EscrowStatus.Created
+            token: _token,
+            deadline: uint64(_deadline),
+            amount: 0
         });
 
         emit EscrowCreated(newEscrowId, msg.sender, _seller, 0, _deadline);
         return newEscrowId;
     }
 
-    function depositFunds(uint256 _escrowId) external payable onlyBuyer(_escrowId) inState(_escrowId, EscrowStatus.Created) {
-        require(msg.value > 0, "Deposit amount must be greater than 0");
-
-        escrows[_escrowId].amount = msg.value;
-        escrows[_escrowId].status = EscrowStatus.Funded;
-
-        emit FundsDeposited(_escrowId, msg.value);
+    function depositFunds(uint256 _escrowId, uint256 _amount) external payable onlyBuyer(_escrowId) inState(_escrowId, EscrowStatus.Created) {
+        Escrow storage escrow = escrows[_escrowId];
+        
+        if (escrow.token == address(0)) {
+            require(msg.value > 0, "Deposit amount must be greater than 0");
+            escrow.amount = msg.value;
+        } else {
+            require(_amount > 0, "Token amount must be greater than 0");
+            require(IERC20(escrow.token).transferFrom(msg.sender, address(this), _amount), "Token transfer failed");
+            escrow.amount = _amount;
+        }
+        
+        escrow.status = EscrowStatus.Funded;
+        emit FundsDeposited(_escrowId, escrow.amount);
     }
 
     function markDelivered(uint256 _escrowId) external onlySeller(_escrowId) inState(_escrowId, EscrowStatus.Funded) {
@@ -102,8 +117,12 @@ contract EscrowPlatform {
         uint256 paymentAmount = escrow.amount;
         escrow.amount = 0; 
 
-        (bool success, ) = escrow.seller.call{value: paymentAmount}("");
-        require(success, "Transfer to seller failed");
+        if (escrow.token == address(0)) {
+            (bool success, ) = escrow.seller.call{value: paymentAmount}("");
+            require(success, "Transfer to seller failed");
+        } else {
+            require(IERC20(escrow.token).transfer(escrow.seller, paymentAmount), "Token transfer failed");
+        }
 
         emit PaymentReleased(_escrowId, escrow.seller, paymentAmount);
     }
@@ -124,8 +143,12 @@ contract EscrowPlatform {
         escrow.amount = 0; 
 
         if (refundAmount > 0) {
-            (bool success, ) = escrow.buyer.call{value: refundAmount}("");
-            require(success, "Transfer to buyer failed");
+            if (escrow.token == address(0)) {
+                (bool success, ) = escrow.buyer.call{value: refundAmount}("");
+                require(success, "Transfer to buyer failed");
+            } else {
+                require(IERC20(escrow.token).transfer(escrow.buyer, refundAmount), "Token transfer failed");
+            }
         }
 
         emit RefundIssued(_escrowId, escrow.buyer, refundAmount);
@@ -144,12 +167,13 @@ contract EscrowPlatform {
     function getEscrowDetails(uint256 _escrowId) external view returns (
         address buyer,
         address seller,
+        address token,
         uint256 amount,
         uint256 createdAt,
         uint256 deadline,
         EscrowStatus status
     ) {
         Escrow memory e = escrows[_escrowId];
-        return (e.buyer, e.seller, e.amount, e.createdAt, e.deadline, e.status);
+        return (e.buyer, e.seller, e.token, e.amount, e.createdAt, e.deadline, e.status);
     }
 }

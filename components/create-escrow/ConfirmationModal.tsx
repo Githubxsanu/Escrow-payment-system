@@ -14,8 +14,10 @@ interface ConfirmationModalProps {
 export default function ConfirmationModal({ isOpen, onClose, onConfirm, formData, buyerAddress, isProcessing, error }: ConfirmationModalProps) {
   if (!isOpen) return null;
 
-  // Mock estimated gas
-  const estimatedGas = '0.0025 ETH';
+  // Mock estimated gas on Polygon
+  const isErc20 = formData.currencyType === 'erc20';
+  const currencySymbol = isErc20 ? 'TOKEN' : 'MATIC';
+  const estimatedGas = `0.0025 ${currencySymbol}`;
   const total = formData.amount ? (parseFloat(formData.amount) + parseFloat(estimatedGas.split(' ')[0])).toFixed(4) : '0.00';
 
   return (
@@ -47,7 +49,7 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, formData
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Amount</span>
-              <span className="font-mono text-white">{formData.amount} ETH</span>
+              <span className="font-mono text-white">{formData.amount} {currencySymbol}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Est. Network Fee</span>
@@ -55,7 +57,7 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, formData
             </div>
             <div className="pt-3 mt-3 border-t border-white/[0.05] flex justify-between items-center">
               <span className="text-slate-300 font-medium">Total</span>
-              <span className="font-mono text-lg font-bold text-cyan-400">{total} ETH</span>
+              <span className="font-mono text-lg font-bold text-cyan-400">{total} {currencySymbol}</span>
             </div>
           </div>
           

@@ -8,6 +8,10 @@ export async function POST(req: Request) {
   try {
     const data = await req.json();
     const { escrowId, fileData, fileHash, signature, fileName } = data;
+
+    if (!fileData || fileData.length > 6 * 1024 * 1024) {
+      return NextResponse.json({ success: false, error: 'File data missing or too large' }, { status: 413 });
+    }
     
     // Store in memory mapping
     fileStore[escrowId] = { 
