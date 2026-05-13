@@ -4,13 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Shield, Wallet, Copy, ExternalLink, LogOut, AlertTriangle } from 'lucide-react';
 import { useWallet } from '@/hooks/useWallet';
-import { usePathname } from 'next/navigation';
+
 
 // No longer hardcoding a target chain to allow "any network" support
 
 export default function Navbar() {
-  const pathname = usePathname();
-  const isUpiPage = pathname.startsWith('/upi-escrow');
   const { address, shortAddress, network, isConnecting, error, connect, disconnect } = useWallet();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -52,7 +50,7 @@ export default function Navbar() {
               </div>
             </div>
 
-            {!isUpiPage && (
+
               <div className="flex items-center gap-4">
                 <Link href="/dashboard" className="hidden md:block text-sm font-medium text-slate-300 hover:text-white transition-colors">
                   Dashboard
@@ -84,7 +82,7 @@ export default function Navbar() {
                             Copy Address
                           </button>
                           <a 
-                            href={`https://amoy.polygonscan.com/address/${address}`}
+                            href={`https://sepolia.etherscan.io/address/${address}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors"
@@ -126,7 +124,6 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-            )}
           </div>
         </div>
       </nav>

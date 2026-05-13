@@ -38,7 +38,7 @@ export default function VisualFlow() {
               </motion.div>
               <div className="text-center">
                 <h4 className="font-display font-semibold text-white">Buyer</h4>
-                <p className="text-xs text-slate-400 font-mono mt-1">Crypto or UPI</p>
+                <p className="text-xs text-slate-400 font-mono mt-1">Crypto Setup</p>
               </div>
             </motion.div>
 

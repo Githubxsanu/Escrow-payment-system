@@ -100,18 +100,16 @@ export default function DashboardTopNav({ onMenuClick }: TopNavProps) {
                         <Copy className="w-4 h-4" />
                         Copy Address
                       </button>
-                      {network?.name?.toLowerCase().includes('polygon') && (
-                        <a 
-                          href={`https://amoy.polygonscan.com/address/${address}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          View Explorer
-                        </a>
-                      )}
+                      <a 
+                        href={`https://sepolia.etherscan.io/address/${address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        View Explorer
+                      </a>
                       <button 
                         onClick={() => {
                           disconnect();

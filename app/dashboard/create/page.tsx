@@ -48,14 +48,9 @@ export default function CreateEscrowPage() {
       // 2. Call createEscrow on the smart contract
       console.log('Creating escrow on blockchain...');
       
-      const tokenAddress = formData.currencyType === 'erc20' 
-        ? formData.tokenAddress 
-        : "0x0000000000000000000000000000000000000000";
-
       const txReceipt = await createEscrow(
         formData.sellerAddress, 
-        deadlineTimestamp, 
-        tokenAddress
+        deadlineTimestamp
       );
       console.log('Escrow created!', txReceipt);
       

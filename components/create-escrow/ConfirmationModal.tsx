@@ -14,9 +14,8 @@ interface ConfirmationModalProps {
 export default function ConfirmationModal({ isOpen, onClose, onConfirm, formData, buyerAddress, isProcessing, error }: ConfirmationModalProps) {
   if (!isOpen) return null;
 
-  // Mock estimated gas on Polygon
-  const isErc20 = formData.currencyType === 'erc20';
-  const currencySymbol = isErc20 ? 'TOKEN' : 'MATIC';
+  // Mock estimated gas on Sepolia
+  const currencySymbol = 'ETH';
   const estimatedGas = `0.0025 ${currencySymbol}`;
   const total = formData.amount ? (parseFloat(formData.amount) + parseFloat(estimatedGas.split(' ')[0])).toFixed(4) : '0.00';
 
