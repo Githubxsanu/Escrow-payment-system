@@ -12,7 +12,7 @@ interface TopNavProps {
 // No longer hardcoding a target chain to allow "any network" support
 
 export default function DashboardTopNav({ onMenuClick }: TopNavProps) {
-  const { address, shortAddress, network, isConnecting, disconnect } = useWallet();
+  const { address, shortAddress, network, isConnecting, error, connect, disconnect } = useWallet();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
